@@ -1,0 +1,277 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password String?
+  accounts      Account[]
+  userSocietes UserSociete[]
+}
+
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String @db.VarChar(130)
+  providerAccountId  String @db.VarChar(120)
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+model UserSociete {
+  id Int @id @default(autoincrement())
+  user_id String @db.VarChar(200) @unique
+  societe_id Int
+  user User @relation(fields: [user_id], references: [id])
+  societe Societe @relation(fields: [societe_id], references: [id])
+}
+model Societe {
+  id Int @id @default(autoincrement())
+  identifiant_system String
+  mot_de_passe_system String
+  type_societe String @default("1")
+  nom String
+  nif String
+  rc String?
+  email String?
+  telephone String?
+  bp String?
+  forme_juridique String
+  secteur_activite String
+  adresse_province String
+  adresse_commune String
+  adresse_quartier String
+  adresse_avenue String
+  adresse_numero String?
+  tva Boolean @default(false)
+  taux_tva Float?
+  tc Boolean @default(false)
+  prelevement_forfetaire Boolean @default(false)
+  direction_fiscale  String
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  userSociete UserSociete[]
+  categories Categorie[]
+  clients Client[]
+  banque Banque[]
+  unite_mesures UniteMesure[]
+  factutes Facture[]
+  produits Produit[]
+  mouvements_stock MouvementStock[]
+  logsObr LogOBR[]
+}
+
+model Categorie {
+  id Int @id @default(autoincrement())
+  libelle String @db.VarChar(150)
+  produits Produit[]
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+  @@unique([libelle,societe_id])
+}
+model UniteMesure {
+  id Int @id @default(autoincrement())
+  libelle String @db.VarChar(150)
+  produits Produit[]
+  mouvementStock MouvementStock[]
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+  @@unique([libelle,societe_id])
+}
+model Produit {
+  id Int @id @default(autoincrement())
+  nom String @db.VarChar(150)
+  stock_actuel Float @default(0) 
+  stock_minimal_alerte Int @default(0)
+  stockable Boolean 
+  prix_unitaire_revien Float @default(0) 
+  prix_unitaire_vente_TTC Float @default(0) 
+  categorieId Int
+  uniteId Int
+  tva Float @default(0) 
+  prelevement_forfaitaire Float @default(0) 
+  taxe_consomation Float @default(0) 
+  categorie Categorie @relation(fields: [categorieId],references: [id])
+  unite_mesure UniteMesure @relation(fields: [uniteId],references: [id])
+  details_facture DetailFacture[]
+  mouvements_stock MouvementStock[]
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+  @@unique([nom,societe_id])
+}
+model Client {
+  id Int @id @default(autoincrement())
+  nom String
+  NIF String?
+  type_personne String
+  isLocalClient Boolean @default(true)
+  assujetti_tva Boolean @default(false)
+  assujetti_tc Boolean @default(false)
+  assujetti_pf Boolean @default(false)
+  client_local Boolean @default(true)
+  client_telephone String @default("")
+  client_mail String @default("")
+  client_boite_postal String @default("")
+  secteur_activite String @default("")
+  personne_contact_nom String @default("")
+  personne_contact_telephone String @default("")
+  adresse String @default("")
+  factures Facture[]
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+}
+
+model Banque {
+  id Int @id @default(autoincrement())
+  nom_bank String
+  numero_compte String
+  factures Facture[]
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+}
+
+model Facture {
+  id Int @id @default(autoincrement())
+  numero_facture String?
+  numero_unique_facture String?
+  devise String @default("BIF")
+  taux_devise Float @default(1)
+  client_id Int 
+  client Client @relation(fields: [client_id],references: [id])
+  ModePaiement String @default("1")
+  banque_id Int?
+  banque Banque? @relation(fields: [banque_id], references: [id])
+  date_paiement DateTime?
+  type_facture String @default("FN")
+  numero_facture_reference String?
+  facture_motif String?
+  facture_signature_electronique String?
+  nom_prenom_signateur String?
+  date_validation_obr DateTime?
+  id_obr Int?
+  caution Float @default(0)
+  rembourcement_caution Float @default(0)
+  montant_facture Float @default(0)
+  details_facture DetailFacture[]
+  mouvement_stock MouvementStock[]
+  etat_facture EtatFacture @default(non_validee)
+  sended_to_obr Boolean @default(false)
+  annulation_send_to_obr Boolean @default(false)
+  activer Boolean @default(true)
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+}
+enum EtatFacture {
+non_validee
+validee
+annuler
+}
+model DetailFacture {
+  id Int @id @default(autoincrement())
+  facture_id Int
+  facture Facture  @relation(fields: [facture_id],references: [id])
+  produit_id Int
+  produit Produit @relation(fields: [produit_id], references: [id])
+  prix_unitaire_vente_hors_tva Float
+  taxe_consomation Float @default(0)
+  prelevement_forfetaire Float @default(0)
+  taxe_service_electronique Float @default(0)
+  prix_unitaire_tva Float @default(0)
+  prix_vente_unitaire Float
+  quantite Float
+  createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  @@unique([produit_id, facture_id])
+}
+model MouvementStock {
+  id Int @id @default(autoincrement())
+  mouv_id_system String
+  facture_reference_id Int?
+  facture Facture? @relation(fields: [facture_reference_id], references: [id])
+  
+  type_mouvement TypeMouvement
+  produit_id Int
+  produit Produit @relation(fields: [produit_id],references: [id]) 
+  quantite Int
+  unite_mesure_id Int
+  unite_mesure UniteMesure @relation(fields: [unite_mesure_id], references: [id])
+  prix_revien Float
+  motif String?
+  envoyer_obr Boolean @default(false)
+  activer Boolean @default(true)
+   createAt DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+}
+enum TypeMouvement {
+EN
+ER
+EI
+EAJ
+ET
+EAU
+SN
+SP
+SD
+SV
+SC
+SAJ
+ST
+SAU
+}
+model LogOBR {
+  id Int @id @default(autoincrement())
+  methode String
+  lien String?
+  code_reponse Int
+  message_reponse String
+  result String
+  signature_electronique String?
+  date_envoi DateTime @default(now())
+  updateAt DateTime @updatedAt()
+  societe_id Int
+  societe Societe @relation(fields: [societe_id],references: [id])
+}
+
+
