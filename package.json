@@ -10,7 +10,8 @@
       "format": "prettier . --write",
       "lint": "next lint --fix",
       "start": "next start -p 4000",
-      "typecheck": "tsc --noEmit"
+      "typecheck": "tsc --noEmit",
+      "postinstall": "prisma generate"
    },
    "engines": {
       "node": ">= 16",
