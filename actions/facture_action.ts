@@ -607,7 +607,7 @@ export const get_numero_facture_normale_disponible = async () => {
       '' +
       (today_year === 2024 ? facture._count.id + 1 : facture._count.id + 1) +
       '/' +
-      today_year
+      today_year + '/geciva'
    )
 }
 export const addHours = (date: Date, hours: number) => {
