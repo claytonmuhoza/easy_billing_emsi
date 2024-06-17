@@ -602,7 +602,7 @@ export const get_numero_facture_normale_disponible = async () => {
    }
 
    return (
-      'FN-' +
+      'FN' +
       add_zero +
       '' +
       (today_year === 2024 ? facture._count.id + 1 : facture._count.id + 1) +
